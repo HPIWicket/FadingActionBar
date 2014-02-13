@@ -30,3 +30,5 @@ apks
 # Gradle
 build
 .gradle
+library/.settings/org.eclipse.jdt.core.prefs
+samples/stock/.settings/org.eclipse.jdt.core.prefs
