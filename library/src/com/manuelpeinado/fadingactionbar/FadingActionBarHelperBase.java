@@ -296,6 +296,7 @@ public abstract class FadingActionBarHelperBase {
         }
     };
     private int mLastScrollPosition;
+		private int mInitialHeight = -1;
 
     private void onNewScroll(int scrollPosition) {
         if (isActionBarNull()) {
@@ -303,8 +304,8 @@ public abstract class FadingActionBarHelperBase {
         }
 
         int currentHeaderHeight = mHeaderContainer.getHeight();
-        if (currentHeaderHeight != mLastHeaderHeight) {
-            updateHeaderHeight(currentHeaderHeight);
+        if (mInitialHeight != mLastHeaderHeight) {
+            updateHeaderHeight(mInitialHeight);
         }
 
         int headerHeight = currentHeaderHeight - getActionBarHeight();
@@ -320,6 +321,14 @@ public abstract class FadingActionBarHelperBase {
         int dampedScroll = (int) (scrollPosition * damping);
         int offset = mLastDampedScroll - dampedScroll;
         mHeaderContainer.offsetTopAndBottom(offset);
+        if (mInitialHeight < 0) {
+        	mInitialHeight = mHeaderContainer.getHeight();
+        }
+        LayoutParams params = mHeaderContainer.getLayoutParams();
+        int newHeight = mInitialHeight - scrollPosition - mHeaderContainer.getTop();
+				params.height = newHeight > 0 ? newHeight : 0;
+				mHeaderContainer.setLayoutParams(params);
+        
 
         if (mListViewBackgroundView != null) {
             offset = mLastScrollPosition - scrollPosition;

@@ -3,8 +3,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
-    <include layout="@layout/fab__header_container" />
-
     <com.manuelpeinado.fadingactionbar.view.ObservableScrollView
         android:id="@+id/fab__scroll_view"
         android:layout_width="match_parent"
@@ -23,5 +21,7 @@
                 android:background="@android:color/transparent" />
         </LinearLayout>
     </com.manuelpeinado.fadingactionbar.view.ObservableScrollView>
+
+    <include layout="@layout/fab__header_container" />
 
 </com.manuelpeinado.fadingactionbar.view.RootLayout>
