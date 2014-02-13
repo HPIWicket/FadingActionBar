@@ -40,7 +40,7 @@ import com.manuelpeinado.fadingactionbar.view.OnScrollChangedCallback;
 
 @SuppressWarnings("unchecked")
 public abstract class FadingActionBarHelperBase {
-    protected static final String TAG = "FadingActionBarHelper";
+	
     private Drawable mActionBarBackgroundDrawable;
     private FrameLayout mHeaderContainer;
     private int mActionBarBackgroundResId;
@@ -54,10 +54,10 @@ public abstract class FadingActionBarHelperBase {
     private boolean mLightActionBar;
     private boolean mUseParallax = true;
     private int mLastDampedScroll;
-    private int mLastHeaderHeight = -1;
     private boolean mFirstGlobalLayoutPerformed;
     private FrameLayout mMarginView;
     private View mListViewBackgroundView;
+    private OnScrollChangedCallback mAdditionalScrollListener;
 
     public final <T extends FadingActionBarHelperBase> T actionBarBackground(int drawableResId) {
         mActionBarBackgroundResId = drawableResId;
@@ -108,6 +108,11 @@ public abstract class FadingActionBarHelperBase {
         mUseParallax = value;
         return (T)this;
     }
+    
+    public final <T extends FadingActionBarHelperBase> T  scrollChangedCallback(OnScrollChangedCallback value) {
+    	mAdditionalScrollListener = value;
+      return (T)this;
+  }
 
     public final View createView(Context context) {
         return createView(LayoutInflater.from(context));
@@ -252,7 +257,10 @@ public abstract class FadingActionBarHelperBase {
 
     private OnScrollChangedCallback mOnScrollChangedListener = new OnScrollChangedCallback() {
         public void onScroll(int l, int t) {
-            onNewScroll(t);
+        	onNewScroll(t);
+        	if (mAdditionalScrollListener != null){
+        		mAdditionalScrollListener.onScroll(l, t);
+        	}
         }
     };
 
@@ -297,21 +305,30 @@ public abstract class FadingActionBarHelperBase {
     };
     private int mLastScrollPosition;
 		private int mInitialHeight = -1;
+		private int mLastAlpha;
+		
+		public int getLastAlpha() {
+			return mLastAlpha;
+		}
+		
+		public int getHeaderHeight() {
+			return mInitialHeight;
+		}
 
     private void onNewScroll(int scrollPosition) {
         if (isActionBarNull()) {
             return;
         }
-
-        int currentHeaderHeight = mHeaderContainer.getHeight();
-        if (mInitialHeight != mLastHeaderHeight) {
-            updateHeaderHeight(mInitialHeight);
+        
+        if (mInitialHeight < 0) {
+        	updateHeaderHeight(mHeaderContainer.getHeight());
         }
 
+        int currentHeaderHeight = mHeaderContainer.getHeight();
         int headerHeight = currentHeaderHeight - getActionBarHeight();
         float ratio = (float) Math.min(Math.max(scrollPosition, 0), headerHeight) / headerHeight;
-        int newAlpha = (int) (ratio * 255);
-        mActionBarBackgroundDrawable.setAlpha(newAlpha);
+        mLastAlpha = (int) (ratio * 255);
+        mActionBarBackgroundDrawable.setAlpha(mLastAlpha);
 
         addParallaxEffect(scrollPosition);
     }
@@ -321,14 +338,10 @@ public abstract class FadingActionBarHelperBase {
         int dampedScroll = (int) (scrollPosition * damping);
         int offset = mLastDampedScroll - dampedScroll;
         mHeaderContainer.offsetTopAndBottom(offset);
-        if (mInitialHeight < 0) {
-        	mInitialHeight = mHeaderContainer.getHeight();
-        }
         LayoutParams params = mHeaderContainer.getLayoutParams();
         int newHeight = mInitialHeight - scrollPosition - mHeaderContainer.getTop();
 				params.height = newHeight > 0 ? newHeight : 0;
 				mHeaderContainer.setLayoutParams(params);
-        
 
         if (mListViewBackgroundView != null) {
             offset = mLastScrollPosition - scrollPosition;
@@ -350,7 +363,7 @@ public abstract class FadingActionBarHelperBase {
             params2.topMargin = headerHeight;
             mListViewBackgroundView.setLayoutParams(params2);
         }
-        mLastHeaderHeight = headerHeight;
+      	mInitialHeight = mHeaderContainer.getHeight();
     }
 
     private void initializeGradient(ViewGroup headerContainer) {
